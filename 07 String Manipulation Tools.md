@@ -1,362 +1,523 @@
 # String Manipulation Tools in Linux/Unix
 
-String manipulation tools are a set of command-line utilities that allow you to perform various operations on text data, such as viewing, searching, filtering, transforming, and processing text files.
+String manipulation tools are a set of command-line utilities that allow you to perform various operations on text data, such as: 
+- Viewing
+- Searching
+- Filtering
+- Transforming
+- Processing text files
+  
+**Viewing File Contents**
 
-## Viewing File Contents
+`cat` - Concatenate and Display Files
+  - The `cat` command displays the entire content of a file. It is best suited for small files.
 
-### `cat` - Concatenate and Display Files
-The `cat` command displays the entire content of a file. It is best suited for small files.
-
-**Syntax:**
+- Syntax:
 ```bash
 cat <filename>
 ```
 
-**Example:**
+- Example:
 ```bash
 cat /etc/hosts
 ```
 
-### `less` - View Long Files Interactively
-The `less` command displays file content one screen at a time, allowing both forward and backward navigation. It's ideal for viewing long files.
+`less` - View Long Files Interactively
+  - The `less` command displays file content one screen at a time, allowing both forward and backward navigation. It's ideal for viewing long files.
 
-**Syntax:**
+- Syntax:
 ```bash
 less <filename>
 ```
 
-**Example:**
+- Example:
 ```bash
 less /etc/passwd
 ```
 
-#### Navigation in `less`:
-- **Forward search:** `/text` then press Enter
-- **Reverse search:** `?text` then press Enter
-- **Next match:** `n`
-- **Previous match:** `N`
-- **Go to end:** `G`
-- **Go to beginning:** `g`
-- **Exit:** `q`
+  - Navigation in `less`:
+| Key | Function |
+|-----|----------|
+| `/text` | Forward search |
+| `?text` | Reverse search |
+| `n` | Next occurrence (forward) |
+| `N` | Next occurrence (reverse) |
+| `G` | Move to bottom of file |
+| `g` | Move to top of file |
+| `q` | Exit from file |
 
-## Viewing Partial File Contents
 
-### `head` - Display First Lines
-Displays the first few lines of a file (default: 10 lines).
+**Viewing Partial File Contents**
 
-**Syntax:**
+`head` - Display First Lines
+  - Displays the first few lines of a file (default: 10 lines).
+
+- Syntax:
 ```bash
 head -n <number> <filename>
 # or
 head -<number> <filename>
 ```
 
-**Examples:**
+- Examples:
 ```bash
 head /etc/passwd          # First 10 lines
 head -n 5 /etc/passwd     # First 5 lines
 head -5 /etc/passwd       # First 5 lines
 ```
 
-### `tail` - Display Last Lines
-Displays the last few lines of a file (default: 10 lines).
+`tail` - Display Last Lines
+  - Displays the last few lines of a file (default: 10 lines).
 
-**Syntax:**
+- Syntax:
 ```bash
 tail -n <number> <filename>
 # or
 tail -<number> <filename>
 ```
 
-**Examples:**
+- Examples:
 ```bash
 tail /etc/passwd          # Last 10 lines
 tail -n 5 /etc/passwd     # Last 5 lines
 tail -5 /etc/passwd       # Last 5 lines
 ```
 
-## Counting File Elements
+---
 
-### `wc` - Word Count
-Counts lines, words, and characters in a file.
+**Counting File Elements**
 
-**Syntax:**
+ `wc` - Word Count
+  - Counts lines, words, and characters in a file.
+
+- Syntax:
 ```bash
 wc [options] <filename>
 ```
 
-**Options:**
-- `-l`: Count lines only
-- `-w`: Count words only
-- `-c`: Count characters only
+- Options:
+  
+| Option | Description |
+|--------|-------------|
+| `-l` | Show total count of lines only |
+| `-w` | Show total count of words only |
+| `-c` | Show total count of characters only |
 
-**Examples:**
+- Examples:
 ```bash
-wc /etc/passwd            # Shows all counts (lines, words, characters)
+wc /etc/passwd            # Shows all counts lines, words, and characters
+
 wc -l /etc/passwd         # Shows only line count
 ```
 
-**Output format:** `lines words characters filename`
+> Output format: `lines words characters filename`
 
-## Sorting File Content
+---
 
-### `sort` - Sort Lines
-Sorts the lines of a text file.
+**Sorting File Content**
+  - Display content of a file in sorted (ordered) form
 
-**Syntax:**
+- Syntax:
 ```bash
 sort [options] <filename>
 ```
 
-**Common Options:**
-- `-n`: Numeric sort
-- `-r`: Reverse sort order
-- `-k <field>`: Sort by specific field
-- `-t <delimiter>`: Specify field separator
+- Common Options:
+  
+| Option | Description |
+|--------|-------------|
+| `-n` | Numeric sort |
+| `-k <position>` | Specify position/field to sort |
+| `-r` | Reverse sorting |
+| `-t <separator>` | Specify field separator |
 
-**Examples:**
+
+- Examples:
 ```bash
-sort /etc/passwd                    # Alphabetical sort (default)
-sort -n -k 3 -t : /etc/passwd       # Numeric sort by UID (3rd field)
-sort -n -k 3 -t : -r /etc/passwd    # Reverse numeric sort by UID
+# Alphabetical sort (default)
+sort /etc/passwd
+
+# Numeric sort on 3rd field (UID) with :  separator
+sort -n -k 3 -t : /etc/passwd
+
+# Reverse numeric sort on 3rd field
+sort -n -k 3 -t :  -r /etc/passwd
 ```
 
-## Extracting Specific Content
+---
 
-### `cut` - Cut Out Sections
-Extracts specific columns or characters from each line of a file.
+**Extracting Specific Content**
 
-**Syntax:**
+`cut` - Cut Out Sections
+  - Extracts specific columns or characters from each line of a file.
+
+- Syntax:
 ```bash
 cut [options] <filename>
 ```
 
-**Options:**
-- `-f <field_list>`: Specify field numbers (comma-separated or ranges)
-- `-d <delimiter>`: Specify field delimiter
-- `-c <character_list>`: Specify character positions
+- Options:
+| Option | Description |
+|--------|-------------|
+| `-f <field_no>` | Specify field number to display |
+| `-d <delimiter>` | Specify field separator |
+| `-c <char_no>` | Show only specific characters |
 
-**Examples:**
+- Examples:
 ```bash
 # Extract usernames (1st field) from /etc/passwd
 cut -f 1 -d : /etc/passwd
 
-# Extract multiple fields
+# Display multiple fields (username, UID, home, shell)
 cut -f 1,3,6,7 -d : /etc/passwd
 
-# Extract a range of fields
+# Display range of fields (1-4)
 cut -f 1-4 -d : /etc/passwd
+or
+cut -f 4- -d : /etc/passwd
 
-# Extract from field 4 to end
+# Display from field 4 to end of line
 cut -f 4- -d : /etc/passwd
 
 # Save output to file
 cut -f 1,3,6,7 -d : /etc/passwd > passwd_selectedinfo
-
-# Extract by character position
-cut -c 1-3 testfile      # First 3 characters
-cut -c 6- testfile       # From 6th character to end
 ```
 
-## Using Pipelines
+- Character Based Examples
+  - Sample File (testfile):
+```
+This is first line.
+This is second line.
+This is third line. 
+```
 
-A pipeline (`|`) connects commands so the output of one becomes the input of the next.
-
-**Examples:**
+- Examples:
 ```bash
-cut -f 1 -d : /etc/passwd | sort
+# Cut first 3 characters
+cut -c 1-3 testfile
+
+# Cut from 6th character to end
+cut -c 6- testfile
+```
+
+---
+
+**Using Pipelines**
+
+- A pipeline connects commands so that the output of one command is used as input for the next command.
+- Diagram
+
+```
+┌────────────────────────────────────────────────────────┐
+│                                                        │
+│  cmd1 ──output──▶ | ──▶ cmd2 ──output──▶ | ──▶ cmd3  │
+│                                                        │
+│  Output becomes input for next command                 │
+│                                                        │
+└────────────────────────────────────────────────────────┘
+```
+
+- Examples:
+```bash
+# Extract usernames and sort them
+cut -f 1 -d :  /etc/passwd | sort
+
+# Extract usernames, sort, and view with less
 cut -f 1 -d : /etc/passwd | sort | less
+
+# Count lines in passwd file
 cat /etc/passwd | wc -l
 ```
 
-## Finding Unique Lines
+---
 
-### `uniq` - Report or Filter Repeated Lines
-Filters adjacent duplicate lines from sorted input.
+**Finding Unique Lines**
 
-**Syntax:**
+`uniq` - Report or Filter Repeated Lines
+  - Filters adjacent duplicate lines from sorted input.
+
+> `uniq` only removes consecutive duplicate lines, so sorting is usually required first.
+
+- Syntax:
 ```bash
 uniq [options] <input>
 ```
 
-**Common Option:**
+Common Option:
 - `-c`: Count occurrences of each line
 
-**Examples:**
+- Examples:
 ```bash
 # First sort, then find unique lines
 cut -f 1 -d : /etc/passwd | sort | uniq
 
 # Count unique occurrences
 cut -f 1 -d : /etc/passwd | sort | uniq -c
+
+# Display unique shells (WRONG - won't work properly)
+cut -f 7 -d : /etc/passwd | uniq
+
+# Display unique shells (CORRECT - with sort)
+cut -f 7 -d : /etc/passwd | sort | uniq
+
+# Display unique shells with count
+cut -f 7 -d : /etc/passwd | sort | uniq -c
 ```
 
-**Note:** `uniq` only removes adjacent duplicate lines, so input should typically be sorted first.
+---
 
-## Capturing Pipeline Output
+**Capturing Pipeline Output**
+  - Store intermediate results of a pipeline without blocking the flow
+    
+`tee` - Redirect to Multiple Destinations
+  - Reads from standard input and writes to both standard output and files.
 
-### `tee` - Redirect to Multiple Destinations
-Reads from standard input and writes to both standard output and files.
-
-**Syntax:**
+- Syntax:
 ```bash
-command | tee [file]
+command1 | tee file1 | command2 | tee file2 | command3
 ```
 
-**Example:**
-```bash
-# Capture intermediate outputs in pipeline
-cut -f 1 -d : /etc/passwd | tee cutoutput | sort | tee sortoutput | uniq -c
+- Diagram:  Pipeline with tee
+
+```
+┌───────────────────────────────────────────────────────┐
+│                                                       │
+│  cmd1 ──▶ tee ──▶ cmd2 ──▶ tee ──▶ cmd3               │
+│             │                 │                       │
+│             ▼                 ▼                       │
+│          file1             file2                      │
+│                                                       │
+│  Data flows through pipeline AND saves to files       │
+│                                                       │
+└───────────────────────────────────────────────────────┘
 ```
 
-**Note:** Unlike redirection operators (`>` or `>>`), `tee` doesn't interrupt the pipeline flow.
-
-## Pattern Matching
-
-### `grep` - Global Regular Expression Print
-Searches for patterns in files and displays matching lines.
-
-**Syntax:**
+- Example:
 ```bash
-grep [options] <pattern> <filename>
+# Save intermediate outputs
+cut -f 1 -d : /etc/passwd | tee cutoutput | sort | tee sortoutput | uniq -c | tee uniqout
+
+# View saved files
+ls
+cat cutoutput
+
+# Alternative (saves final output with redirection)
+cut -f 1 -d : /etc/passwd | tee cutoutput | sort | tee sortoutput | uniq -c > uniqout
 ```
 
-**Common Options:**
-- `-v`: Invert match (show non-matching lines)
-- `-c`: Count matching lines only
-- `-r` or `-R`: Recursive search in directories
-- `-i`: Case-insensitive search
-- `-n`: Show line numbers
-- `-E`: Extended regular expressions (same as `egrep`)
+> Note: Using redirection operator (`>`) in the middle of a pipeline breaks the flow.  Use `tee` instead.
 
-**Special Characters:**
-- `^pattern`: Lines beginning with pattern
-- `pattern$`: Lines ending with pattern
-- `\.`: Escape special characters (e.g., `\.` for literal dot)
+---
 
-**Examples:**
+**Pattern Matching**
+  - Search for a given pattern in a file and display all matching lines
+
+`grep` - Global Regular Expression Print
+  - Searches for patterns in files and displays matching lines.
+
+- Syntax:
 ```bash
-# Basic search
+grep [option] <pattern> <filename>
+```
+
+- Options:
+  - `-v`: Invert match (show non matching lines)
+  - `-c`: Count matching lines only
+  - `-r` or `-R`: Recursive search in directories
+  - `-i`: Case insensitive search
+  - `-n`: Show line numbers
+  - `-E`: Extended regular expressions (same as `egrep`)
+  - Special Characters:
+    - `^pattern`: Lines beginning with pattern
+    - `pattern$`: Lines ending with pattern
+    - `\.`: Escape special characters (e.g., `\.` for literal dot)
+
+- Examples:
+```bash
+# Search for user in passwd file
+grep david /etc/passwd
+grep dav /etc/passwd
+grep da /etc/passwd
 grep root /etc/passwd
+
+# Find bash shell users
+grep bash /etc/passwd
+
+# Find bash shell usernames only
+grep bash /etc/passwd | cut -f 1 -d : 
+
+# Sort bash shell users alphabetically
+grep bash /etc/passwd | cut -f 1 -d : | sort
+
+# Count bash shell users
+grep -c bash /etc/passwd
+
+# Find users NOT using bash shell
+grep -v bash /etc/passwd
+grep -vc bash /etc/passwd  # Count only
+
+# Lines beginning with 'root'
+grep ^root /etc/passwd
+grep ^s /etc/passwd
+
+# Lines beginning with '#' (comments)
+grep ^# /etc/bashrc
+grep -v ^# /etc/bashrc  # Non-commented lines
+
+# Search for '#' anywhere (escape special character)
+grep \# /etc/bashrc
+
+# Non-commented lines with count
+grep -v \# /etc/bashrc | wc -l
+
+# Recursive search for 'bash' in home directory
+grep -r bash ~
+
+# Lines ending with 'login'
+grep login$ /etc/passwd
+grep n$ /etc/passwd
 
 # Case-insensitive search
 grep -i ava /etc/passwd
-
-# Count matches
-grep -c bash /etc/passwd
-
-# Invert match
-grep -v bash /etc/passwd
-
-# Lines starting with pattern
-grep ^root /etc/passwd
-
-# Lines ending with pattern
-grep bash$ /etc/passwd
-
-# Search for special characters (escape with \)
-grep '\#' /etc/bashrc
-
-# Recursive search
-grep -r bash ~
-
-# Combine with other commands
-grep bash /etc/passwd | cut -f 1 -d : | sort
 ```
 
-### `egrep` - Extended Grep
-Supports extended regular expressions (same as `grep -E`).
+- `egrep` - Extended Grep
+  - Supports extended regular expressions (same as `grep -E`).
+  - Grep with extended regular expressions (supports OR, AND operations)
+
+- Operators
+
+| Operator | Function |
+|----------|----------|
+| `|` | OR |
+| `.*` | AND (any characters between) |
+
+
 
 **Examples:**
 ```bash
-# OR operation (matches lines containing 'bash' OR 'login')
-egrep 'bash|login' /etc/passwd
+# Create backup
+cp /etc/passwd database
 
-# AND operation (matches lines containing 'no' followed by 'login')
-egrep 'no.*login' /etc/passwd
+# Search for lines containing 'bash' OR 'login'
+egrep 'bash|login' database
+
+# Search for lines containing 'no' AND 'login' with any characters between
+egrep 'no.*login' database
 ```
 
-## Comparing Files
+---
 
-### `diff` - Compare Files Line by Line
-Shows differences between two files.
+**Comparing Files**
 
-**Syntax:**
+`diff` - Compare Files Line by Line
+  - Shows differences between two files.
+
+- Syntax:
 ```bash
 diff <file1> <file2>
 ```
 
-**Output Format:**
-- Lines prefixed with `<` are from the first file
-- Lines prefixed with `>` are from the second file
-- Line numbers indicate where changes occur
+Output Format:
+  - Lines prefixed with `<` are from the first file
+  - Lines prefixed with `>` are from the second file
+  - Line numbers indicate where changes occur
 
-**Example:**
+- Examples
 ```bash
 # Create two similar files with slight differences
 echo "This is first line." > file1
-echo "This is frist line." > file2
+echo "This is line frist." > file2
 diff file1 file2
 ```
+```bash
+# Create backup and add user
+cp /etc/passwd database
+useradd pythondev
+cp /etc/passwd database1
 
-**Output interpretation:**
+# Compare files
+diff database database1
+
+# Output: 
+# 51a52
+# > pythondev:x:1001:1001::/home/pythondev:/bin/sh
+# 51 → first file line number
+# 52 → second file line number
 ```
-1c1
-< This is first line.
+
+- diff Output Symbols
+
+| Symbol | Meaning |
+|--------|---------|
+| `a` | Added |
+| `c` | Changed |
+| `d` | Deleted |
+| `<` | Line from first file |
+| `>` | Line from second file |
+
 ---
-> This is frist line.
-```
-This means line 1 in file1 was changed to produce line 1 in file2.
 
-## Stream Editing
+**Stream Editor (`sed`) Command**
 
-### `sed` - Stream Editor
-Performs text transformations on an input stream.
+`sed` - Stream Editor
+  - Performs text transformations on an input stream.
 
-**Syntax:**
+Syntax:
 ```bash
 sed 's/pattern/replacement/flags' <filename>
 ```
 
-**Common Flags:**
-- `g`: Replace all occurrences (global)
-- `i`: Case-insensitive matching
-
-**Examples:**
+Multiple replacements:
 ```bash
-# Simple replacement (display only)
-sed 's/nologin/yeslogin/g' /etc/passwd
+sed -e 's/current_text/new_text/g' -e 's/current_text_1/new_text_1/g' filename
+```
 
-# Save to new file
+> Note: `sed` does not modify the source file; it only prints changes to terminal.  Save output using redirection.
+
+- Common Flags:
+  - `g`: Replace all occurrences (global)
+  - `i`: Case insensitive matching
+
+- Examples:
+```bash
+# Create backup file
+cp /etc/passwd database
+
+# Replace 'nologin' with 'yeslogin'
+sed 's/nologin/yeslogin/g' database
+
+# Save changes to new file
 sed 's/nologin/yeslogin/g' database > newdatabase
 
 # Multiple replacements
 sed -e 's/nologin/YESLOGIN/g' -e 's/bash/zsh/g' database > multiple_changes
-
-# In-place editing (with backup)
-sed -i.bak 's/old/new/g' file.txt
 ```
 
-**Note:** By default, `sed` outputs to stdout without modifying the original file.
+> Note: By default, `sed` outputs to stdout without modifying the original file.
 
-## Pattern Scanning and Processing
+---
 
-### `awk` - Text Processing Language
-Processes and analyzes text files, particularly structured data.
+**Pattern Scanning and Processing**
 
-**Syntax:**
+`awk` - Text Processing Language
+  - Processes and analyzes text files, particularly structured data.
+  - Display specific columns of a file in desired format
+  - Default separator is space
+
+- Syntax:
 ```bash
-awk 'pattern { action }' <filename>
+awk '{print $<field_number> "<separator>" $<field_number> ... }' filename
 ```
 
-**Common Usage:**
-- `$1`, `$2`, ...: Represent fields in the current line
-- `NF`: Number of fields in current line
-- `NR`: Current line number
-- `FS`: Field separator (default: whitespace)
-- `OFS`: Output field separator (default: space)
+- Common Usage:
+  - `$1`, `$2`, ...: Represent fields in the current line
+  - `NF`: Number of fields in current line
+  - `NR`: Current line number
+  - `FS`: Field separator (default: whitespace)
+  - `OFS`: Output field separator (default: space)
 
-**Examples:**
+- Examples
 ```bash
 # Create a sample file
 echo "echo hello world!" > helloworld
@@ -372,8 +533,12 @@ awk -F: '{print $1, $3}' /etc/passwd
 
 # Conditional processing
 awk -F: '$3 > 1000 {print $1}' /etc/passwd
+
+# Without spaces in separator
+awk '{print $3";"$2";"$1}' helloworld
 ```
 
-**Note:** By default, `awk` uses whitespace as the field separator. Use `-F` to specify a different separator.
+> Note: By default, `awk` uses whitespace as the field separator. Use `-F` to specify a different separator.
 
 ---
+
