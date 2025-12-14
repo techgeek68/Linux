@@ -36,6 +36,7 @@ less /etc/passwd
 ```
 
   - Navigation in `less`:
+    
 | Key | Function |
 |-----|----------|
 | `/text` | Forward search |
@@ -157,6 +158,7 @@ cut [options] <filename>
 ```
 
 - Options:
+  
 | Option | Description |
 |--------|-------------|
 | `-f <field_no>` | Specify field number to display |
@@ -210,7 +212,7 @@ cut -c 6- testfile
 ```
 ┌────────────────────────────────────────────────────────┐
 │                                                        │
-│  cmd1 ──output──▶ | ──▶ cmd2 ──output──▶ | ──▶ cmd3  │
+│  cmd1 ──output──▶ | ──▶ cmd2 ──output──▶ | ──▶ cmd3    │
 │                                                        │
 │  Output becomes input for next command                 │
 │                                                        │
@@ -426,8 +428,8 @@ Output Format:
 - Examples
 ```bash
 # Create two similar files with slight differences
-echo "This is first line." > file1
-echo "This is line frist." > file2
+echo "This is the first line." > file1
+echo "This is the frist line." > file2
 diff file1 file2
 ```
 ```bash
@@ -487,7 +489,7 @@ cp /etc/passwd database
 # Replace 'nologin' with 'yeslogin'
 sed 's/nologin/yeslogin/g' database
 
-# Save changes to new file
+# Save changes to a new file
 sed 's/nologin/yeslogin/g' database > newdatabase
 
 # Multiple replacements
@@ -502,7 +504,7 @@ sed -e 's/nologin/YESLOGIN/g' -e 's/bash/zsh/g' database > multiple_changes
 
 `awk` - Text Processing Language
   - Processes and analyzes text files, particularly structured data.
-  - Display specific columns of a file in desired format
+  - Display specific columns of a file in the desired format
   - Default separator is space
 
 - Syntax:
@@ -534,7 +536,7 @@ awk -F: '{print $1, $3}' /etc/passwd
 # Conditional processing
 awk -F: '$3 > 1000 {print $1}' /etc/passwd
 
-# Without spaces in separator
+# Without spaces in the separator
 awk '{print $3";"$2";"$1}' helloworld
 ```
 
