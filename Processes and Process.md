@@ -1,0 +1,705 @@
+# Processes and Process Lifecycle 
+
+---
+
+A process is a running instance of a launched, executable program. Any running application or command is referred to as a process. 
+
+  - systemd is the first process that starts at boot time (PID 1)
+  - Each process is identified by a unique ID, called process ID (PID)
+
+
+**Process Components**
+- From the moment a process is created, it consists of: 
+  - An address space of allocated memory
+  - Security properties, including ownership credentials and privileges
+  - One or more execution threads of program code
+  - A process state
+
+**Process Environment**
+- The process environment includes:
+  - Local and global variables
+  - Current scheduling context
+  - Allocated system resources (file descriptors, network ports)
+
+**Process Creation**
+- Process creation occurs through forking, where a parent process duplicates its address space to create a child process structure.  Every new process is assigned:
+    - A unique process ID (PID) for tracking and security
+    - The parent's process ID (PPID)
+
+> Note: All processes are descendants of the first system process, systemd, on a Red Hat system.
+
+**Process Lifecycle**
+- Through the fork routine, a child process inherits:
+  - Security identities
+  - Previous and current file descriptors
+  - Port and resource privileges
+  - Environment variables
+  - Program code
+
+**Typical process lifecycle:**
+  1. The parent process sleeps when the child process runs
+  2. Parent sets a wait request to be signaled when the child completes
+  3. Child process exits, closes resources, and becomes a zombie
+  4. Parent process wakes up, cleans the process table entry
+  5. Parent frees the last resource of the child process
+
+
+**Types of Processes**
+  - Foreground process: Interactive processes running in the terminal
+  - Background process (Daemons): Processes running without direct user interaction
+
+
+**Process States**
+  - In a multitasking operating system, each CPU can work on one process at a time.  Processes are assigned states that change as circumstances dictate:
+
+| Name | Flag | Kernel-defined State | Description |
+|------|------|---------------------|-------------|
+| Running | R | TASK_RUNNING | Executing on CPU or waiting to run on the CPU queue.  Can be executing user routines, kernel routines, or queued and ready |
+| Sleeping | S | TASK_INTERRUPTIBLE | Waiting for some condition (hardware request, system resource access, or signal). It can be awakened by signals.  Returns to Running when the condition is satisfied or signal is received |
+| Sleeping | D | TASK_UNINTERRUPTIBLE | Sleeping but does not respond to signals. Used when a process interruption might cause unpredictable device state or data corruption.  Woken only by awaited event |
+| Sleeping | K | TASK_KILLABLE | Same as D state but modified to allow response to kill signals |
+| Sleeping | I | TASK_REPORT_IDLE | Subset of state D used for kernel threads.  Not counted in load average calculations |
+| Stopped | T | TASK_STOPPED | Process stopped (suspended), usually by signal from user or another process. Can be resumed |
+| Stopped | T | TASK_TRACED | Process being debugged, temporarily stopped |
+| Zombie | Z | EXIT_ZOMBIE | Child process signals parent as it exits.  All resources released except PID |
+| Dead | X | EXIT_DEAD | The parent process cleans up the remaining child structure.  Cannot be observed in process listings |
+
+
+**Understanding Process States**
+  - On a single CPU system, only one process can run at a time. Several processes can be in an R (Running) state, but not all are executing consecutively; some are in a waiting status. The S column of the `top` command or the STAT column of the `ps` command displays the state of each process.
+
+---
+
+**Process Monitoring Tools**
+
+**I.  `pstree` Command**
+
+Displays parent-child hierarchy of processes: 
+
+```bash
+pstree                 # Show process tree
+pstree | less          # Output with pagination
+```
+
+**II. `ps` Command**
+
+- The Linux version of `ps` supports three option formats:
+  - UNIX (POSIX) options: can be grouped, must be preceded by a dash (-)
+  - BSD options: can be grouped, must NOT be used with a dash
+  - GNU long options: preceded by two dashes
+
+For example, `ps -aux` is NOT the same as `ps aux`
+
+Displays detailed information about processes:
+
+```bash
+ps -ef                     # All processes
+ps -ef | less              # Paginated output
+ps -ef | grep Harrish      # Show Harrish's processes
+ps aux                     # All processes, including those without a controlling terminal
+ps lax                     # Long listing with more details, avoids username lookups
+ps j                       # Display job information
+ps --forest                # Tree format showing parent-child relationships
+```
+
+**`ps` Output: TTY Column**
+
+The TTY column indicates the controlling terminal: 
+  - **ttyN** (e.g., tty1, tty2): Virtual console terminals (foreground processes)
+  - **pts/N** (e.g., pts/0, pts/1): Pseudo-terminals used for SSH connections, graphical terminal emulators, tmux, or remote sessions
+  - **? **:  Process is running in the background (detached from the terminal, typically system daemons/services)
+
+**- `ps` output columns:**
+  - **PID**: Process ID
+  - **PPID**: Parent Process ID
+  - **PGID**: Process Group ID (PID of process group leader)
+  - **SID**: Session ID (PID of session leader)
+  - **USER**: Process owner
+  - **TTY**:  Controlling terminal
+  - **STAT**: Process state
+  - **%CPU**: CPU usage percentage
+  - **%MEM**: Memory usage percentage
+  - **VSZ/VIRT**: Virtual memory size
+  - **RSS/RES**: Resident set size (physical memory)
+  - **TIME**: CPU time used since process started
+
+
+**III. top Command**
+
+  - Real time display of resource-intensive processes that refreshes at configurable intervals (default 3 seconds).
+
+```bash
+top                    # Start top command
+```
+
+**-`top` Interactive Commands**
+
+| Key | Purpose |
+|-----|---------|
+| H | Help for interactive keystrokes |
+| L, T, M | Toggles for load, threads, and memory header lines |
+| 1 | Toggle for individual CPUs or summary for all CPUs |
+| S | Change refresh (screen) rate, in decimal seconds (e.g., 0.5, 1, 5) |
+| B | Toggle reverse highlighting for Running processes |
+| Shift+B | Enable bold use in display |
+| Shift+H | Toggle threads; show process summary or individual threads |
+| U, Shift+U | Filter for any username (effective, real) |
+| M | Sort processes based on memory usage, descending order |
+| P | Sort processes based on CPU usage, descending order |
+| T | Sort processes based on total runtime |
+| K | Kill a process (prompts for PID, then signal) |
+| R | Renice a process (prompts for PID, then nice_value) |
+| Shift+W | Write (save) current display configuration for next restart |
+| Q | Quit |
+| F | Manage columns by enabling/disabling fields and setting sort field |
+
+
+**Changing Snapshot Interval**
+
+```bash
+top
+            # Press 's' in keyboard
+                # Change delay from 3.0 to ...  (e.g., 10)
+```
+
+**Redirecting top Output**
+
+```bash
+top > topoutput        # Redirect output to file
+
+cat topoutput          # View the output
+```
+
+**`top` Output Columns**
+  - **PID**: The process ID
+  - **USER**: The process owner username
+  - **PR**: Priority (kernel scheduling priority)
+  - **NI**: Nice value
+  - **VIRT**: Virtual memory is all the memory that the process uses
+  - **RES**: Resident memory (physical memory in use)
+  - **SHR**: Shared memory
+  - **S**: Process state (D, R, S, T, or Z)
+  - **%CPU**: CPU usage percentage
+  - **%MEM**:  Memory usage percentage
+  - **TIME+**: CPU time (total processing time since process started)
+  - **COMMAND**: The process command name
+
+---
+
+**Job Control**
+
+**- Jobs and Sessions**
+  - A job is associated with each pipeline entered at shellthe  prompt
+  - All processes in a pipeline are part of the job and members of the same process group
+  - Only one job can read input and keyboard-generated signals from the terminal at a time (foreground processes)
+  - Background processes cannot read input or receive keyboard interrupts from the terminal, but can write to it
+  - Each terminal runs in its own session
+  - A job that runs in its own session belongs to its controlling terminal
+
+
+**Running Jobs in the Background**
+  - Start any command in background by appending `&`:
+```bash
+sleep 10000 &
+
+  # [1] 3228               [JobID] PID
+```
+- When a command line with a pipe is sent to the background, the PID of the last command in the pipeline is displayed.  All pipeline processes are members of that job.
+- Example
+```
+ls | sort | mail -s "Sort output" &
+
+      # [1] 5998            [JobID] PID
+```
+
+- Background Process Example:
+```bash
+firefox &
+
+      # [1] 1234            [JobID] PID
+```
+
+**Job Control Commands**
+```bash
+jobs                   # Display status of processes running in the background
+fg %1                  # Bring background job 1 to foreground
+bg %1                  # Send job 1 to background
+kill %1                # Kill process based on job ID
+```
+<img width="805" height="151" alt="Screenshot 2025-12-25 at 8 23 30 AM" src="https://github.com/user-attachments/assets/c9c8531d-2ebf-4f18-8d6b-4f25b60a85c8" />
+
+![Screenshot 2025-12-25 at 8 24 17 AM](https://github.com/user-attachments/assets/a62fa5a4-8387-41c6-b51b-847b06a12e73)
+
+![Screenshot 2025-12-25 at 8 28 43 AM](https://github.com/user-attachments/assets/9ea60946-1e48-4014-baa7-956b8f9f1c1d)
+
+<img width="798" height="176" alt="Screenshot 2025-12-25 at 8 26 57 AM" src="https://github.com/user-attachments/assets/78cf4307-e103-41c3-b964-eae8427f44f9" />
+
+- Process Control Key Combinations
+  - **Ctrl+Z** → Pause (stop/suspend) the foreground process
+  - **Ctrl+C** → Interrupt (terminate) foreground process (SIGINT signal)
+  - **Ctrl+\** → Quit with core dump (SIGQUIT signal)
+
+
+- Background Process Management Example:
+
+```bash
+firefox                                # Start process
+
+# Suspend the process
+Ctrl + Z
+
+# Check status
+jobs                   # Shows suspended job
+
+# Resume in background
+bg %1
+
+# Verify running in the background
+jobs                   # Output: firefox &
+```
+<img width="801" height="248" alt="Screenshot 2025-12-25 at 8 32 50 AM" src="https://github.com/user-attachments/assets/db4554d8-a78b-4ea8-a7c6-efc82e2f0a1e" />
+
+
+**- Bringing Background Jobs to Foreground**
+
+  - Use the `fg` command to bring a background job to the foreground.  Use the `(%jobNumber)` format to specify which process to foreground. 
+
+```bash
+fg %1                  # Bring job 1 to foreground
+
+firefox                # Now running in foreground
+```
+![Screenshot 2025-12-25 at 8 33 27 AM](https://github.com/user-attachments/assets/7a8d91c9-1e49-4320-8497-4b41f4284462)
+
+
+**- Sending Foreground Process to Background**
+
+  - To send a foreground process to the background, press Ctrl+Z to suspend it, then use `bg`:
+
+```bash
+sleep 10000
+
+Ctrl+Z
+          # [2]+  Stopped                 sleeping 10000
+
+bg %1
+          # [2]+ sleep 10000 &
+```
+<img width="802" height="288" alt="Screenshot 2025-12-25 at 8 35 25 AM" src="https://github.com/user-attachments/assets/1883f4d2-c508-4d4b-a547-ef18924eee35" />
+
+
+**- Exiting with Suspended Jobs**
+
+- The shell warns a user who attempts to exit a terminal window (session) with suspended jobs.  If the user tries again to exit immediately, the suspended jobs are stopped, and the session closes.
+
+---
+
+**Sending Signals to Processes**
+  - Signals are software interrupts delivered to processes to report events, errors, external events, or explicit signal-sending commands.
+
+- Fundamental Signals
+
+| Signal | Name | Number | Definition |
+|--------|------|--------|-----------|
+| HUP | SIGHUP | 1 | Hangup:  Reports termination of controlling process or requests re-initialization |
+| INT | SIGINT | 2 | Keyboard interrupt: Causes program termination (Ctrl+C). Can be blocked or handled |
+| QUIT | SIGQUIT | 3 | Keyboard quit: Similar to SIGINT but adds process dump (Ctrl+\). Can be blocked or handled |
+| KILL | SIGKILL | 9 | Kill, unblockable: Causes abrupt termination.  Cannot be blocked, ignored, or handled |
+| TERM | SIGTERM | 15 | Terminate (default): Causes program termination. Can be blocked, ignored, or handled.  Allows cleanup |
+| CONT | SIGCONT | 18 | Continue: Resumes stopped process. Cannot be blocked, always resumes process |
+| STOP | SIGSTOP | 19 | Stop, unblockable: Suspends the process. Cannot be blocked or handled |
+| TSTP | SIGTSTP | 20 | Keyboard stop: Unlike SIGSTOP, can be blocked or handled (Ctrl+Z) |
+
+- Signal Strength & Recommendations
+  - **15 (SIGTERM)** → Soft Signal:  Graceful termination, allows cleanup
+  - **9 (SIGKILL)** → Strong Signal: Forced termination, no cleanup possible
+
+  **Red Hat Recommended Practice**: Send SIGTERM first, then try SIGINT.  If both signals fail, then try SIGKILL.
+
+  > **Note**: Administrators commonly use SIGKILL first because it forces process termination immediately and cannot be ignored.  However, with SIGKILL, the process is not allowed to run any self cleanup routines. Always prefer SIGTERM when possible.
+
+- Default Signal Actions
+  - Each signal has a default action, usually one of:
+    - **Term**:  Terminate a program (exit) immediately
+    - **Core**: Save a program's memory image (core dump), then terminate
+    - **Stop**: Stop a running program (suspend) and wait to continue (resume)
+
+- Programs react to expected event signals by implementing handler routines to ignore, replace, or extend a signal's default action.
+
+
+**Sending Signals to Processes - Commands**
+
+**- kill Command**
+  - Send signals using process ID
+  - Syntax:
+      kill [signal] <pid>
+      
+  - Examples:   
+```bash
+kill -l                # List all available signals
+```
+```
+kill 6564              # Send SIGTERM (default, signal 15)
+kill -15 <PID>         # Send soft signal (SIGTERM)
+kill -9 <PID>          # Send a strong signal (SIGKILL) if the process is rigid/unresponsive
+kill -SIGKILL 6568     # Send SIGKILL using name
+kill -SIGTERM 6564     # Send SIGTERM using name
+```
+
+- You can specify signals either by: 
+  - Name (e.g., `-HUP`, `-SIGHUP`)
+  - Number (e.g., `-1`, `-15`, `-9`)
+
+> **Note**: Users can kill their own processes, but root privilege is required to kill processes owned by other users. 
+
+
+**- killall Command**
+  - Signal multiple processes by command name
+  - Syntax:
+      killall [signal] <process_name>
+      
+  - Examples:   
+```bash
+killall -15 vim        # Terminate all instances of vim with SIGTERM
+killall -9 vim         # Force kill all vim processes
+```
+
+
+**- pkill Command**
+  - Signal processes matching pattern or selection criteria
+  - Syntax:
+      pkill [signal] <pattern>
+      
+  - Examples:
+```bash
+pkill -u Harrish               # Kill all processes owned by user 'Harrish'
+pkill -SIGKILL -u Harrish      # Force kill all processes of user 'Harrish'
+
+pkill -t tty3                  # Kill processes on terminal tty3
+pkill -P 8391                  # Kill child processes of parent PID 8391
+```
+
+>Note: When a process is in T (stopped/traced) state (after receiving SIGSTOP), it cannot respond to signals like SIGTERM.  As a result, the process remains in T state and is displayed even after using `pkill` command.
+
+
+**pgrep Command**
+  - Find and identify process IDs matching criteria (does not kill, just lists):
+```bash
+pgrep -l -u Dev        # List processes owned by user 'Dev' with names
+pgrep firefox          # Get PIDs of firefox processes
+pgrep -l vim           # List all vim processes with PIDs
+```
+<img width="802" height="146" alt="Screenshot 2025-12-25 at 8 52 36 AM" src="https://github.com/user-attachments/assets/c60bb75d-f48e-4fb4-ae91-81602b1d5276" />
+
+> Note: This command operates similarly to `pkill`, including most of the same options, except `pgrep` lists processes rather than killing them.
+
+
+**Using ps and pstree for Process Relationship**
+```bash
+ps j                   # Display job and session information
+pstree -p Dev          # Show process tree for user Dev with PIDs
+```
+![Screenshot 2025-12-25 at 8 54 09 AM](https://github.com/user-attachments/assets/36a8bc76-07b3-4201-89a9-574d511438a5)
+
+
+**Process Termination Examples**
+
+**- Case 1: Particular Program/Process Not Responding**
+
+```bash
+# Start the program
+vim newfile
+
+        # [Suppose while writing text vim stopped responding]
+
+# Open new terminal tab
+ps -ef | grep vim                      # Monitor PID and terminal number
+
+# Try soft termination first
+kill -15 <PID>                         # Allow process to cleanup
+
+# If process is rigid/unresponsive: 
+kill -9 <PID>                          # Force kill
+```
+<img width="805" height="165" alt="Screenshot 2025-12-25 at 8 56 03 AM" src="https://github.com/user-attachments/assets/fdc96f3d-4a32-4d91-b52f-caf23a12344a" />
+
+
+**- Case 2: Kill All Processes Related to One Application**
+```bash
+# Open multiple vim editors on different tabs of Terminal:
+vim new
+vim new1
+vim new2
+
+# Keep all vim tabs open
+ps -ef | grep vim                      # Each vim has a different PID and terminal
+
+# Kill all vim processes with a soft signal
+killall -15 vim
+
+# Or force kill if needed
+killall -9 vim
+```
+<img width="799" height="271" alt="Screenshot 2025-12-25 at 9 01 26 AM" src="https://github.com/user-attachments/assets/68b2901f-f666-4ccf-955f-1a4cacbc9a05" />
+
+---
+
+**Administrative User Management**
+
+**- Viewing User Sessions**
+
+```bash
+w -f                   # Detailed user session information
+who                    # Basic logged-in user information
+w -u <user_name>       # Specific user's session information
+```
+<img width="963" height="339" alt="Screenshot 2025-12-25 at 9 10 19 AM" src="https://github.com/user-attachments/assets/8c4c2028-b65e-4abe-969d-2909f1a6ea91" />
+
+**- Understanding w Command Output**
+
+- fields are: 
+  - **USER**: Username
+  - **TTY**: Terminal device
+    - **ttyN**: Direct physical/virtual console
+    - **pts/N**: Pseudo-terminal (graphical terminal or SSH)
+    - **? **: No controlling terminal
+  - **FROM**: Login source (remote host or local)
+  - **LOGIN@**: When user logged in
+  - **IDLE**:  Idle time
+  - **JCPU**: Total CPU time for the session, including background jobs and child processes
+  - **PCPU**: CPU time for current foreground process
+  - **WHAT**: Command being executed
+
+
+**Reasons for Administrative Logout**
+- Users might need to be logged out for:
+  - Security violations
+  - Resource overuse
+  - Unresponsive system
+  - Improper access to materials
+
+
+**- Terminating User Sessions**
+
+  - First, identify the session to be terminated:
+```bash
+# View user sessions
+w -f
+w -u <user_name>
+```
+
+Then, determine the terminal and terminate:
+
+```bash
+# Identify terminal via the `w` command
+ w -u Dev                # Find Dev's terminal (e.g., tty3)
+
+# Terminate session (requires root/sudo)
+sudo pkill -t  pts/4    # Terminate all processes on tty3
+
+# Verify termination
+who                    # User should be gone
+```
+
+<img width="951" height="182" alt="Screenshot 2025-12-25 at 9 29 04 AM" src="https://github.com/user-attachments/assets/a8f2347c-5932-4e13-9272-354b6a62d131" />
+
+<img width="951" height="100" alt="Screenshot 2025-12-25 at 9 29 10 AM" src="https://github.com/user-attachments/assets/695f4611-0edb-4ae7-9b2c-12b0b7873ac9" />
+
+
+**- To terminate all processes of a specific user:**
+
+```bash
+# List processes of the user
+pgrep -l -u cnode
+
+# Kill all users' processes
+pkill -u cnode                     # Soft termination
+pkill -SIGKILL -u cnode            # Force kill (also kills session leader)
+```
+> **Note**: Unless SIGKILL is specified, the session leader (Bash login shell) successfully handles and survives the termination request, but terminates all other session processes.
+
+
+**Terminal Specific Termination**
+  - When target processes are in the same login session:
+
+```bash
+# Identify user terminal
+w -u bob                                             # e.g., tty3
+
+# Kill processes on that terminal
+pkill -t tty3                                        # Soft termination
+pkill -SIGKILL -t tty3                               # Force kill (includes session leader)
+```
+
+**Process Tree Termination**
+  - Kill child processes while preserving the parent:
+
+```bash
+# View process tree
+pstree -p bob
+bash(8391)─┬─sleep(8425)
+           ├─sleep(8426)
+           └─sleep(8427)
+
+# Kill only child processes (parent bash survives)
+pkill -P 8391                                                    # Soft termination
+pkill -SIGKILL -P 8391                                           # Force kill children only
+```
+
+---
+
+**Process Priority Management**
+  - All modern operating systems are multitasking.  Users can alter the priority of tasks to control resource allocation.
+
+**- Nice Values**
+  - User managed priority is called the nice value:
+    - **Range**: -20 (Highest/Maximum priority) to +19 (Lowest/Minimum priority)
+    - **Default**: 0
+    - **Behavior**: Lower (more negative) nice value = higher priority = more CPU time
+    - **Behavior**: Higher (more positive) nice value = lower priority = less CPU time (process is "nicer" to others)
+
+
+**Permissions**
+  - Regular users can only increase their processes' nice value (lower the priority)
+  - Only superusers (root) can decrease the nice value (raise priority to negative values)
+
+
+**- nice Command**
+  - Set priority when starting a process
+  - Syntax:
+      nice -n <priority_number> <command>
+
+```bash
+nice -n -10 find /             # Run with higher priority (requires root)
+
+nice -n 10 <some command>      # Run with lower priority (regular user can do this)
+```
+
+**- renice Command**
+  - Alter the priority of an already running process
+  - Syntax:
+      renice -n <priority_number> <PID_of_Process>
+```bash
+renice -n 15 <PID>                                            # Lower priority (regular user can do this)
+sudo renice -n -5 <PID>                                       # Raise priority (requires root)
+renice -n -15 <pid_of_process>                                # High priority (requires root)
+```
+
+**- Monitoring Priority**
+
+```bash
+# Run top in one terminal
+top
+
+# Run process in another terminal
+find /
+
+# Observe the NI (niceness) column in the top
+# Default is 0
+
+# Run process with higher priority
+nice -n -10 find /
+
+# NI column should now show -10
+```
+
+**- Viewing Nice Values**
+
+```bash
+ps -eo pid,ni,comm     # Show PID, nice value, and command
+top                    # Look for the NI column
+htop                   # Look for the NI column
+```
+
+>**Note**: Nice value affects only CPU time allocation.  It does not control memory or I/O device usage.
+
+---
+
+**Monitoring Process Activity**
+
+**- Load Average**
+  - Load average is a measurement provided by the Linux kernel to represent the perceived system load over time.  It can be used as a rough gauge of how many system resource requests are pending.
+
+- What is Load Average?
+  - Represents the average number of processes that are either running or waiting for CPU time
+  - Includes processes waiting for disk/network I/O (in process state D - uninterruptible sleep)
+  - Not a percentage, but an average of queue length
+  - Kernel samples this every 5 seconds based on processes in runnable (R) and uninterruptible (D) states
+  - Reported as an exponential moving average over 1, 5, and 15 minutes
+
+
+**- Viewing Load Average**
+```bash
+uptime
+# 15: 29:03 up 14 min, 2 users, load average: 2.92, 4.48, 5.20
+```
+The three values represent:
+  - First value: Load over the last 1 minute
+  - Second value: Load over the last 5 minutes
+  - Third value: Load over the last 15 minutes
+
+
+**Calculating Load Average Formula**
+  - Linux uses an exponentially damped moving average:
+```
+load_new = load_old * exp(-interval/τ) + n * (1 - exp(-interval/τ))
+```
+
+Where:
+- `load_new`: The new average
+- `load_old`: The previous average
+- `n`: Number of processes in runnable or uninterruptible state
+- `τ`: Time constant for averaging window (different for 1, 5, and 15-minute averages)
+
+
+**Interpreting Load Average Values**
+  - Determine the number of CPUs:
+
+```bash
+lscpu                  # Check CPU count
+# Look for "CPU(s):" line
+```
+
+**Calculate per-CPU load:**
+
+```bash
+# Example for 4-CPU system with load average:  2.92, 4.48, 5.20
+# Divide each by 4:
+# 2.92 / 4 = 0.73 per-CPU (1-min)
+# 4.48 / 4 = 1.12 per-CPU (5-min)
+# 5.20 / 4 = 1.30 per-CPU (15-min)
+
+# Interpretation:
+# < 1.0 = adequate resource use
+# = 1.0 = fully utilized
+# > 1.0 = overloaded, processes waiting
+```
+
+**On a single-core system**:
+- Load 0 = idle
+- Load 1 = fully utilized, no waiting
+- Load > 1 = overloaded
+
+**On a multi-core system**:
+- Per-CPU load < 1.0 = adequate
+- Per-CPU load = 1.0 = fully utilized
+- Per-CPU load > 1.0 = overloaded
+
+---
+
+**Analyzing High Load Average**
+  - **High load with minimal CPU activity:**
+    - Examine disk and network activity
+  - **High CPU load**:
+    - Check CPU intensive processes using `top` or `ps`
+  - **Uninterruptible sleep processes**:
+    - Check disk I/O performance
+
+- What's Included in Load Average
+  - Running processes (state R)
+  - Uninterruptible sleeping processes (state D): waiting for critical disk/network I/O
+  - NOT included: Processes in other sleep states (S, K, I) waiting for events like user input
+
+---
+
+> **Note**: Signal numbers may vary between Linux architectures, but signal names and meanings are standard.  Always use signal names (SIGTERM, SIGKILL) rather than numbers in automation and scripts for portability. 
